@@ -51,7 +51,14 @@ app.get('/api/categories', (req, res) => res.json({
     ]
 }));
 app.get('/api/trending', (req, res) => res.json({ results: MOCK_PRODUCTS }));
-app.get('/api/products', (req, res) => res.json({ results: MOCK_PRODUCTS }));
+app.get('/api/products', (req, res) => {
+    let results = MOCK_PRODUCTS;
+    if (req.query.category) {
+        const term = req.query.category.toLowerCase();
+        results = results.filter(p => p.category && p.category.toLowerCase() === term);
+    }
+    res.json({ results });
+});
 app.post('/api/search', (req, res) => res.json({ query: req.body.query, results: MOCK_PRODUCTS }));
 app.post('/api/recommend', (req, res) => res.json({ results: MOCK_PRODUCTS }));
 
