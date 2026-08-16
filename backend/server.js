@@ -59,7 +59,28 @@ app.get('/api/products', (req, res) => {
     }
     res.json({ results });
 });
-app.post('/api/search', (req, res) => res.json({ query: req.body.query, results: MOCK_PRODUCTS }));
+app.post('/api/search', (req, res) => {
+    const query = (req.body.query || '').toLowerCase();
+    let results = MOCK_PRODUCTS;
+    if (query) {
+        results = MOCK_PRODUCTS.filter(p => {
+            const text = `${p.name} ${p.category} ${p.brand}`.toLowerCase();
+            // Extract price if query has "under XXXX"
+            const maxPrice = query.match(/under\s*₹?(\d+)|<\s*(\d+)/i);
+            let priceCondition = true;
+            if (maxPrice) {
+                const val = parseInt(maxPrice[1] || maxPrice[2], 10);
+                if (p.price > val) priceCondition = false;
+            }
+
+            const keywords = query.replace(/under\s*₹?\d+/ig, '').trim().split(' ').filter(w => w.length > 2);
+            const categoryMatch = keywords.length === 0 || keywords.some(kw => text.includes(kw));
+
+            return priceCondition && categoryMatch;
+        });
+    }
+    res.json({ query, results });
+});
 app.post('/api/recommend', (req, res) => res.json({ results: MOCK_PRODUCTS }));
 
 const PORT = process.env.PORT || 4000;
